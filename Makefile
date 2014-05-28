@@ -22,8 +22,6 @@ LDS-$(CONFIG_WR_NODE)   = arch/lm32/ram.ld
 LDS-$(CONFIG_WR_SWITCH) = arch/lm32/ram-wrs.ld
 
 obj-$(CONFIG_WR_NODE)   += wrc_main.o
-obj-$(CONFIG_WR_SWITCH) += wrs_main.o
-obj-$(CONFIG_WR_SWITCH) += ipc/minipc-mem-server.o ipc/rt_ipc.o 
 
 # our linker script is preprocessed, so have a rule here
 %.ld: %.ld.S $(AUTOCONF) .config
@@ -31,56 +29,8 @@ obj-$(CONFIG_WR_SWITCH) += ipc/minipc-mem-server.o ipc/rt_ipc.o
 
 
 cflags-y =	-ffreestanding -include $(AUTOCONF) -Iinclude/std -Iinclude \
-			-I. -Isoftpll -Iipc
+			-I.
 cflags-y +=	-I$(CURDIR)/pp_printf
-
-cflags-$(CONFIG_PTP_NOPOSIX) += \
-	-DPTPD_FREESTANDING \
-	-DWRPC_EXTRA_SLIM \
-	-DPTPD_MSBF \
-	-DPTPD_DBG \
-	-DPTPD_NO_DAEMON \
-	-DNEW_SINGLE_WRFSM \
-	-DPTPD_TRACE_MASK=0 \
-	-include $(PTP_NOPOSIX)/compat.h \
-	-include $(PTP_NOPOSIX)/PTPWRd/dep/trace.h \
-	-include $(PTP_NOPOSIX)/libposix/ptpd-wrappers.h \
-	-I$(PTP_NOPOSIX)/libptpnetif \
-	-I$(PTP_NOPOSIX)/PTPWRd
-
-obj-$(CONFIG_PTP_NOPOSIX) += wrc_ptp_noposix.o \
-	monitor/monitor.o \
-	lib/ptp-noposix-wrappers.o \
-	$(PTP_NOPOSIX)/PTPWRd/arith.o \
-	$(PTP_NOPOSIX)/PTPWRd/bmc.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/msg.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/net.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/sys.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/timer.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/wr_servo.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/servo.o \
-	$(PTP_NOPOSIX)/PTPWRd/protocol.o \
-	$(PTP_NOPOSIX)/PTPWRd/wr_protocol.o \
-	$(PTP_NOPOSIX)/libposix/freestanding-startup.o
-
-cflags-$(CONFIG_PPSI) += \
-	-ffreestanding \
-	-include include/ppsi-wrappers.h \
-	-Iinclude \
-	-I$(PPSI)/include \
-	-I$(PPSI)/arch-wrpc \
-	-I$(PPSI)/arch-wrpc/include \
-	-I$(PPSI)/proto-ext-whiterabbit \
-	-Iboards/spec
-
-obj-ppsi = \
-	$(PPSI)/ppsi.o \
-	$(PPSI)/proto-standard/libstd.a
-
-obj-$(CONFIG_PPSI) += \
-	monitor/monitor_ppsi.o \
-	lib/ppsi-wrappers.o \
-	$(obj-ppsi)
 
 CFLAGS_PLATFORM  = -mmultiply-enabled -mbarrel-shift-enabled
 LDFLAGS_PLATFORM = -mmultiply-enabled -mbarrel-shift-enabled \
@@ -90,7 +40,6 @@ include shell/shell.mk
 include lib/lib.mk
 include pp_printf/printf.mk
 include dev/dev.mk
-include softpll/softpll.mk
 
 obj-$(CONFIG_WR_NODE) += check-error.o
 
@@ -107,7 +56,6 @@ LDFLAGS = $(LDFLAGS_PLATFORM) \
 OBJS = $(obj-y)
 
 OUTPUT-$(CONFIG_WR_NODE)   = wrc
-OUTPUT-$(CONFIG_WR_SWITCH) = rt_cpu
 OUTPUT := $(OUTPUT-y)
 
 REVISION=$(shell git describe --dirty --always)
@@ -116,21 +64,6 @@ all: tools $(OUTPUT).ram $(OUTPUT).vhd $(OUTPUT).mif
 
 .PRECIOUS: %.elf %.bin
 .PHONY: all tools clean gitmodules $(PPSI)/ppsi.o
-
-# we need to remove "ptpdump" support for ppsi if RAM size is small and
-# we include etherbone
-ifneq ($CONFIG_RAMSIZE,131072)
-  ifdef CONFIG_ETHERBONE
-    PPSI_USER_CFLAGS = -DCONFIG_NO_PTPDUMP
-  endif
-endif
-
-PPSI_USER_CFLAGS += -DDIAG_PUTS=uart_sw_write_string
-
-$(obj-ppsi):
-	$(MAKE) -C $(PPSI) ARCH=wrpc PROTO_EXT=whiterabbit \
-		CROSS_COMPILE=$(CROSS_COMPILE) CONFIG_NO_PRINTF=y \
-		USER_CFLAGS="$(PPSI_USER_CFLAGS)"
 
 sdb-lib/libsdbfs.a:
 	$(MAKE) -C sdb-lib

@@ -18,6 +18,7 @@ unsigned char *BASE_SYSCON;
 unsigned char *BASE_UART;
 unsigned char *BASE_ONEWIRE;
 unsigned char *BASE_ETHERBONE_CFG;
+unsigned char *BASE_WRPC_RAM;
 
 #define SDB_INTERCONNET 0x00
 #define SDB_DEVICE      0x01
@@ -158,4 +159,5 @@ void sdb_find_devices(void)
 	BASE_UART =          find_device(0xe2d13d04);
 	BASE_ONEWIRE =       find_device(0x779c5443);
 	BASE_ETHERBONE_CFG = find_device(0x68202b22);
+	BASE_WRPC_RAM = find_device(0x66cfeb52);
 }
