@@ -126,14 +126,25 @@ def load_programs(old,new,verbose=False,fverbose="dumpr.txt",itoken="write",otok
 			cmd.append(otoken+" "+k[0]+" "+k[1])
 		
 	else:
-		cmd = []
+		mold = {}
 		
 		fold = open(old)
 		
 		for n in fold:
-			cmd.append(n.lower())
-		
+			n = n.lower()
+			n_split = re.split(itoken+"\s",n)
+			n_split = re.split("\s",n_split[1])
+			mold[n_split[0]]=n_split[1]
+			
 		fold.close()
+			
+		cmd = []
+		
+		lmf = mold.items()
+		lmf.sort()
+		
+		for k in lmf:
+			cmd.append(otoken+" "+k[0]+" "+k[1])
 		
 	if verbose:
 		fdump = open(fverbose,"w")
@@ -171,7 +182,7 @@ def wr_program(dev,program_cmd,tintchar=0.01,eol=0xd,pbaudrate=115200,pparity=se
 			elif lverbose == 2:
 				print str(cw)+"/"+str(ntw)+" ("+str(pcw)+"%)"
 			elif lverbose == 3:
-				print cmd+str(cw)+"/"+str(ntw)+" ("+str(pcw)+"%)"
+				print cmd+"\n"+str(cw)+"/"+str(ntw)+" ("+str(pcw)+"%)"
 			else:
 				tc = time.time();
 				telapsed = int(tc-tinit)
@@ -179,7 +190,7 @@ def wr_program(dev,program_cmd,tintchar=0.01,eol=0xd,pbaudrate=115200,pparity=se
 				hours = tv[0]
 				minutes = tv[1]
 				secs = tv[2]
-				print "["+str(hours)+":"+str(minutes)+":"+str(secs)+"] "+cmd+str(cw)+"/"+str(ntw)+" ("+str(pcw)+"%)"
+				print "["+str(hours)+":"+str(minutes)+":"+str(secs)+"] "+cmd+"\n"+str(cw)+"/"+str(ntw)+" ("+str(pcw)+"%)"
 		
 		cw = cw+1
 		
