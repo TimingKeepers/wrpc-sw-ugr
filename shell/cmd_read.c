@@ -20,7 +20,12 @@ int * addr_r;
 	if (args[0]) {
 		fromhex(args[0],&addr);
 		
-		addr_r = (int *) BASE_WRPC_RAM + addr;
+		if (!args[1]) {
+			addr_r = (int *) BASE_WRPC_RAM + addr;
+		}
+		else {
+			addr_r = (int *) 0x0 + addr;
+		}
 		
 		val = *addr_r;
 		

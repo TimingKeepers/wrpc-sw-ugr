@@ -17,11 +17,16 @@ int addr;
 int val;
 int * addr_w;
 
-	if (args[0] && args[1] ) {
+	if (args[0] && args[1]) {
 		fromhex(args[0],&addr);
 		fromhex(args[1],&val);
 		
-		addr_w = (int *) BASE_WRPC_RAM + addr;
+		if (!args[2]) {
+			addr_w = (int *) BASE_WRPC_RAM + addr;
+		}
+		else {
+			addr_w = (int *) 0x0 + addr;
+		}
 		
 		*addr_w = val;
 	}
