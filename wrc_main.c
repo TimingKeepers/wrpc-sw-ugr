@@ -42,6 +42,120 @@ int32_t sfp_deltaTx = 46407;
 int32_t sfp_deltaRx = 167843;
 uint32_t cal_phase_transition = 2389;
 
+uint8_t vc709_init_i2c_switch(uint8_t i2cif) {
+	uint8_t rcode = 0;
+	uint8_t sw1_addr = 0x74;
+	uint8_t sw1_read = (sw1_addr<<1) | 0x01;
+	uint8_t sw1_write = (sw1_addr<<1);
+	uint8_t sw2_addr = 0x75;
+	uint8_t sw2_read = (sw2_addr<<1) | 0x01;
+	uint8_t sw2_write = (sw2_addr<<1);
+	uint8_t sw1_config = 0x18;
+	uint8_t sw2_config = 0x01;
+	unsigned char d;
+	
+	mi2c_start(i2cif);
+	
+	mprintf("READ -> 0x%x\n",sw1_read);
+	if ((mi2c_put_byte(i2cif, sw1_read)) < 0) {
+		mi2c_stop(i2cif);
+		mprintf("ERROR 1...\n");
+		return -1;
+	}
+	
+	mi2c_get_byte(i2cif,&d,1);
+	
+	mi2c_stop(i2cif);
+	
+	mprintf("I2C SWITCH1 INIT -> 0x%x!!\n",d);
+
+	mi2c_start(i2cif);
+	
+	mprintf("WRITE -> 0x%x\n",sw1_write);
+	if ((mi2c_put_byte(i2cif, sw1_write)) < 0) {
+		mi2c_stop(i2cif);
+		mprintf("ERROR 2...\n");
+		return -1;
+	}
+	
+	mprintf("CONFIG -> 0x%x\n",sw1_config);
+	if((rcode = mi2c_put_byte(i2cif, sw1_config)) < 0) {
+		mi2c_stop(i2cif);
+		mprintf("ERROR 3...\n");
+		return -1;
+	}
+	
+	mi2c_stop(i2cif);
+	
+	mi2c_start(i2cif);
+
+	mprintf("READ -> 0x%x\n",sw1_read);
+	if ((mi2c_put_byte(i2cif, sw1_read)) < 0) {
+		mi2c_stop(i2cif);
+		mprintf("ERROR 4...\n");
+		return -1;
+	}
+	
+	mi2c_get_byte(i2cif,&d,1);
+	
+	mi2c_stop(i2cif);
+	
+	mprintf("I2C SWITCH1 CONFIGURED -> 0x%x!!\n",d);
+	
+	
+	// To enable SFP I2C bus
+	
+	mi2c_start(i2cif);
+	
+	mprintf("READ -> 0x%x\n",sw2_read);
+	if ((mi2c_put_byte(i2cif, sw2_read) ) < 0) {
+		mi2c_stop(i2cif);
+		mprintf("ERROR 5...\n");
+		return -1;
+	}
+	
+	mi2c_get_byte(i2cif,&d,1);
+	
+	mi2c_stop(i2cif);
+	
+	mprintf("I2C SWITCH2 INIT -> 0x%x!!\n",d);
+
+	mi2c_start(i2cif);
+	
+	mprintf("WRITE -> 0x%x\n",sw2_write);
+	if (mi2c_put_byte(i2cif, sw2_write) < 0) {
+		mi2c_stop(i2cif);
+		mprintf("ERROR 6...\n");
+		return -1;
+	}
+	
+	mprintf("CONFIG -> 0x%x\n",sw2_config);
+	if((rcode = mi2c_put_byte(i2cif, sw2_config)) < 0) {
+		mi2c_stop(i2cif);
+		mprintf("ERROR 7...\n");
+		return -1;
+	}
+	
+	mi2c_stop(i2cif);
+	
+	mi2c_start(i2cif);
+
+	mprintf("READ -> 0x%x\n",sw2_read);
+	if ((mi2c_put_byte(i2cif, sw2_read)) < 0) {
+		mi2c_stop(i2cif);
+		mprintf("ERROR 8...\n");
+		return -1;
+	}
+	
+	mi2c_get_byte(i2cif,&d,1);
+	
+	mi2c_stop(i2cif);
+	
+	mprintf("I2C SWITCH2 CONFIGURED -> 0x%x!!\n",d);
+	
+	return rcode;
+}
+
 static void wrc_initialize()
 {
 	uint8_t mac_addr[6];
@@ -59,7 +173,8 @@ static void wrc_initialize()
 
 	/*initialize I2C bus*/
 	mi2c_init(WRPC_FMC_I2C);
-	/*check if EEPROM is onboard*/
+	vc709_init_i2c_switch(WRPC_FMC_I2C); // INIT SW1 and SW2 of VC709
+	/*check if EEPROM is onboard*/ 
 	eeprom_present(WRPC_FMC_I2C, FMC_EEPROM_ADR);
 
 	mac_addr[0] = 0x08;	//

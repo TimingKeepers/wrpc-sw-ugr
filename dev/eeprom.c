@@ -68,7 +68,8 @@ uint8_t eeprom_present(uint8_t i2cif, uint8_t i2c_addr)
 	return 0;
 }
 
-static int eeprom_read(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
+/**
+int eeprom_read(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
 		       uint8_t * buf, size_t size)
 {
 	int i;
@@ -97,7 +98,7 @@ static int eeprom_read(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
 	return size;
 }
 
-static int eeprom_write(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
+int eeprom_write(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
 		 uint8_t * buf, size_t size)
 {
 	int i, busy;
@@ -118,11 +119,79 @@ static int eeprom_write(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
 		offset++;
 		mi2c_stop(i2cif);
 
-		do {		/* wait until the chip becomes ready */
+		do {		
 			mi2c_start(i2cif);
 			busy = mi2c_put_byte(i2cif, i2c_addr << 1);
 			mi2c_stop(i2cif);
 		} while (busy);
+
+	}
+	return size;
+}
+**/
+
+int eeprom_read(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
+		       uint8_t * buf, size_t size)
+{
+	int i;
+	unsigned char c;
+	uint8_t a9_a8 = (offset & 0x300) >> 8;
+	uint8_t dev_addr = (i2c_addr | a9_a8);
+	uint8_t reg_addr = offset & 0xff;
+
+	if (!has_eeprom)
+		return -1;
+
+	mi2c_start(i2cif);
+	if (mi2c_put_byte(i2cif, dev_addr << 1) < 0) {
+		mi2c_stop(i2cif);
+		return -1;
+	}
+	mi2c_put_byte(i2cif, reg_addr);
+	mi2c_repeat_start(i2cif);
+	mi2c_put_byte(i2cif, (dev_addr << 1) | 1);
+	for (i = 0; i < size - 1; ++i) {
+		mi2c_get_byte(i2cif, &c, 0);
+		*buf++ = c;
+	}
+	mi2c_get_byte(i2cif, &c, 1);
+	*buf++ = c;
+	mi2c_stop(i2cif);
+
+	return size;
+}
+
+int eeprom_write(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
+		 uint8_t * buf, size_t size)
+{
+	int i, busy;
+
+	uint8_t a9_a8 = (offset & 0x300) >> 8;
+	uint8_t dev_addr = (i2c_addr | a9_a8);
+	uint8_t reg_addr = offset & 0xff;
+
+	if (!has_eeprom)
+		return -1;
+
+	for (i = 0; i < size; i++) {
+		mi2c_start(i2cif);
+
+		if (mi2c_put_byte(i2cif, dev_addr << 1) < 0) {
+			mi2c_stop(i2cif);
+			return -1;
+		}
+		mi2c_put_byte(i2cif,reg_addr);
+		mi2c_put_byte(i2cif, *buf++);
+		offset++;
+		mi2c_stop(i2cif);
+
+		do {		/* wait until the chip becomes ready */
+			mi2c_start(i2cif);
+			busy = mi2c_put_byte(i2cif, dev_addr << 1);
+			mi2c_stop(i2cif);
+		} while (busy);
+		
+		reg_addr = offset & 0xff;
 
 	}
 	return size;
@@ -275,7 +344,7 @@ int8_t eeprom_init_add(uint8_t i2cif, uint8_t i2c_addr, const char *args[])
 
 	if (used == 0xffff)
 		used = 0;	//this means the memory is blank
-
+		
 	while (args[i] != '\0') {
 		if (eeprom_write(i2cif, i2c_addr, EE_BASE_INIT + sizeof(used)
 				 + used, (uint8_t *) args[i], strlen(args[i]))
@@ -289,6 +358,7 @@ int8_t eeprom_init_add(uint8_t i2cif, uint8_t i2c_addr, const char *args[])
 		++used;
 		++i;
 	}
+		
 	//the end of the command, replace last separator with '\n'
 	separator = '\n';
 	if (eeprom_write(i2cif, i2c_addr, EE_BASE_INIT + sizeof(used) + used-1,

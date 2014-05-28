@@ -2,11 +2,11 @@
 #define __EEPROM_H
 
 #define SFP_SECTION_PATTERN 0xdeadbeef
-#define SFPS_MAX 4
+#define SFPS_MAX 2 // 4
 #define SFP_PN_LEN 16
-#define EE_BASE_CAL 4*1024
-#define EE_BASE_SFP 4*1024+4
-#define EE_BASE_INIT 4*1024+SFPS_MAX*29
+#define EE_BASE_CAL 512//4*1024
+#define EE_BASE_SFP EE_BASE_CAL+4//4*1024+4
+#define EE_BASE_INIT EE_BASE_SFP+SFPS_MAX*29//4*1024+SFPS_MAX*29
 
 #define EE_RET_I2CERR -1
 #define EE_RET_DBFULL -2
@@ -28,6 +28,12 @@ struct s_sfpinfo {
 } __attribute__ ((__packed__));
 
 uint8_t eeprom_present(uint8_t i2cif, uint8_t i2c_addr);
+
+int eeprom_read(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
+		       uint8_t * buf, size_t size);
+
+int eeprom_write(uint8_t i2cif, uint8_t i2c_addr, uint32_t offset,
+		 uint8_t * buf, size_t size);
 
 int32_t eeprom_sfpdb_erase(uint8_t i2cif, uint8_t i2c_addr);
 int32_t eeprom_sfp_section(uint8_t i2cif, uint8_t i2c_addr, size_t size,
