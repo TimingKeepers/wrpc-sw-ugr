@@ -4,6 +4,15 @@ import serial
 import sys
 import time
 import re
+import os
+
+def help(pname):
+	print "ERROR: use ",pname," <USB device> <wrc.ram>"
+	print "ERROR: use ",pname," <USB device> <old_wrc.ram> <new_wrc.ram>"
+	print "ERROR: use ",pname," etherbone <ip> <port> <wrc.ram>"
+	print "ERROR: use ",pname," etherbone <ip> <port> <old_wrc.ram> <new_wrc.ram>"
+	print "Made by: Miguel Jimenez Lopez <klyone@ugr.es>, UGR"
+	print
 
 def input_verbose():
 	verbose_ok = False
@@ -153,7 +162,22 @@ def load_programs(old,new,verbose=False,fverbose="dumpr.txt",itoken="write",otok
 		fdump.close()
 
 	return cmd
+
+def etherbone_program(program_cmd,ip,port,proto="udp",token="write",etherbone_path="./tools",verbose=False,lverbose=1):
 	
+	m = {}
+	
+	for l in program_cmd:
+		n_split = re.split(token+"\s",l)
+		n_split = re.split("\s",n_split[1])
+		m[n_split[0]]=n_split[1]
+	
+	for l in m:	
+		os.system(etherbone_path+"/"+"eb-write "+"udp/"+ip+"/"+port+" "+l+"/4 "+m[l]+"/4")
+		
+		if verbose:
+			print etherbone_path+"/"+"eb-write "+proto+"/"+ip+"/"+port+" "+l+"/4 "+m[l]
+			
 
 def wr_program(dev,program_cmd,tintchar=0.01,eol=0xd,pbaudrate=115200,pparity=serial.PARITY_NONE,pstopbits=serial.STOPBITS_ONE,pbytesize=serial.EIGHTBITS,pxonxoff=False,prtscts=False,pdsrdtr=False,verbose=False,lverbose=1):
 	port = serial.Serial(dev, baudrate=pbaudrate,parity=pparity,stopbits=pstopbits,bytesize=pbytesize,xonxoff=pxonxoff,rtscts=prtscts,dsrdtr=pdsrdtr)
@@ -213,34 +237,62 @@ print "\t\t White-Rabbit Programer v1 (OBP) \t\t"
 print "============================================================================"
 
 print
-print "Note: An OBP core is needed in your gateware for this script..."
+print "Note: An OBP and/or Etherbone core is needed in your gateware for this script..."
 print
 
-if len(sys.argv) != 3 and len(sys.argv) != 4:
-	print "ERROR: use ",sys.argv[0]," <USB device> <wrc.ram>"
-	print "ERROR: use ",sys.argv[0]," <USB device> <old_wrc.ram> <new_wrc.ram>"
-	print "Made by: Miguel Jimenez Lopez <klyone@ugr.es>, UGR"
-	print
+if len(sys.argv) < 2:
+	help(sys.argv[0])
 	sys.exit(-1)
 	
 [verbose_c,verbose_l] = input_verbose()
 
 dev = sys.argv[1]
-program = sys.argv[2]
 
-if len(sys.argv) == 4:
-	program_old = program
-	program_new = sys.argv[3]
-	print "Checking changes and Loading program..."
-else:
-	program_old = program
-	program_new = None
-	print "Loading program..."
+dev_l = dev.lower()
+
+if dev_l == "etherbone":
+	if len(sys.argv) == 6:
+		ip = sys.argv[2]
+		port = sys.argv[3]
+		program = sys.argv[4]
+		program_old = program
+		program_new = sys.argv[5]
+		print "Checking changes and Loading program..."
+	elif len(sys.argv) == 5:
+		ip = sys.argv[2]
+		port = sys.argv[3]
+		program = sys.argv[4]
+		program_old = program
+		program_new = None
+		print "Loading program..."
+	else:
+		help(sys.argv[0])
+		sys.exit(-1)
+
+else:	
+	program = sys.argv[2]
+
+	if len(sys.argv) == 4:
+		program_old = program
+		program_new = sys.argv[3]
+		print "Checking changes and Loading program..."
+	elif len(sys.argv) == 3:
+		program_old = program
+		program_new = None
+		print "Loading program..."
+	else:
+		help(sys.argv[0])
+		sys.exit(-1)
+		
 
 pcmd = load_programs(program_old,program_new)
 print "Program loaded!"
 print "Starting to program..."
-#execute_program(dev,interactive=True)
-wr_program(dev,pcmd,tintchar=0.001,verbose=(verbose_c == 'y'),lverbose=verbose_l)
+
+if dev == "etherbone":
+	etherbone_program(pcmd,ip,port,verbose=(verbose_c == 'y'),lverbose=verbose_l)
+else:
+	wr_program(dev,pcmd,tintchar=0.001,verbose=(verbose_c == 'y'),lverbose=verbose_l)
+
 print "Device programed!"
 print
