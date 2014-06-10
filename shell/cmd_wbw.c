@@ -11,20 +11,19 @@
 #include <wrc.h>
 #include "shell.h"
 
-static int cmd_read(const char *args[])
+static int cmd_wbw(const char *args[])
 {
 int addr;
 int val;
-int * addr_r;
+int * addr_w;
 
-	if (args[0]) {
+	if (args[0] && args[1]) {
 		fromhex(args[0],&addr);
+		fromhex(args[1],&val);
 		
-		addr_r = (int *) BASE_WRPC_RAM + addr;
+		addr_w = (int *) 0x0 + addr;
 		
-		val = *addr_r;
-		
-		mprintf("M[0x%x]=0x%x\n",(unsigned int) addr_r,val);
+		*addr_w = val;
 	}
 	else {
 		return -1;
@@ -33,8 +32,7 @@ int * addr_r;
 	return 0;
 }
 
-DEFINE_WRC_COMMAND(read) = {
-	.name = "read",
-	.exec = cmd_read,
+DEFINE_WRC_COMMAND(wbw) = {
+	.name = "wbw",
+	.exec = cmd_wbw,
 };
-

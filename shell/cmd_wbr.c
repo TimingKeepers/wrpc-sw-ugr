@@ -11,7 +11,7 @@
 #include <wrc.h>
 #include "shell.h"
 
-static int cmd_read(const char *args[])
+static int cmd_wbr(const char *args[])
 {
 int addr;
 int val;
@@ -20,7 +20,7 @@ int * addr_r;
 	if (args[0]) {
 		fromhex(args[0],&addr);
 		
-		addr_r = (int *) BASE_WRPC_RAM + addr;
+		addr_r = (int *) 0x0 + addr;
 		
 		val = *addr_r;
 		
@@ -33,8 +33,8 @@ int * addr_r;
 	return 0;
 }
 
-DEFINE_WRC_COMMAND(read) = {
-	.name = "read",
-	.exec = cmd_read,
+DEFINE_WRC_COMMAND(wbr) = {
+	.name = "wbr",
+	.exec = cmd_wbr,
 };
 
