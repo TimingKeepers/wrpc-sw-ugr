@@ -109,6 +109,38 @@ static unsigned char *find_device_deep(unsigned int base, unsigned int sdb,
 				 record->device.sdb_component.addr_first.low);
 }
 
+static int get_devices_deep(unsigned int base, unsigned int sdb, struct sdb_component * devs, unsigned int * n_devs, const int MAX_DEVS)
+{
+	sdb_record_t *record = (sdb_record_t *) sdb;
+	int records = record->interconnect.sdb_records;
+	int i;
+	int rcode;
+
+	for (i = 0; i < records; ++i, ++record) {
+		if (record->empty.record_type == SDB_BRIDGE)
+			rcode = get_devices_deep(base + record->bridge.sdb_component.addr_first.low, base + record->bridge.sdb_child.low,devs,n_devs,MAX_DEVS);
+			if (rcode < 0)
+				return -1;
+
+		if (record->empty.record_type != SDB_DEVICE)
+			continue;
+
+		if (*n_devs < MAX_DEVS) {
+			devs[*n_devs] = record->device.sdb_component;
+			devs[*n_devs].product.name[19] = 0;
+			devs[*n_devs].addr_first.low = base + record->device.sdb_component.addr_first.low;
+			devs[*n_devs].addr_last.low = base + record->device.sdb_component.addr_last.low;
+			mprintf("DEV: %s (0x%x-0x%x)\n",devs[*n_devs].product.name,devs[*n_devs].addr_first.low,devs[*n_devs].addr_last.low);
+			(*n_devs)++;
+		}
+		else {
+			return -1;
+		}
+	}
+	
+	return 0;
+}
+
 static void print_devices_deep(unsigned int base, unsigned int sdb)
 {
 	sdb_record_t *record = (sdb_record_t *) sdb;
@@ -147,6 +179,11 @@ void sdb_print_devices(void)
 	mprintf("SDB memory map:\n");
 	print_devices_deep(0, SDB_ADDRESS);
 	mprintf("---\n");
+}
+
+int sdb_get_devices(struct sdb_component * devs, unsigned int * n_devs, const int MAX_DEVS) {
+	//sdb_print_devices();
+	return get_devices_deep(0,SDB_ADDRESS,devs,n_devs,MAX_DEVS);
 }
 
 void sdb_find_devices(void)
