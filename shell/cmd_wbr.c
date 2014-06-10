@@ -11,6 +11,8 @@
 #include <wrc.h>
 #include "shell.h"
 
+extern int base_wbrw;
+
 static int cmd_wbr(const char *args[])
 {
 int addr;
@@ -20,7 +22,7 @@ int * addr_r;
 	if (args[0]) {
 		fromhex(args[0],&addr);
 		
-		addr_r = (int *) 0x0 + addr;
+		addr_r = (int *) base_wbrw + addr;
 		
 		val = *addr_r;
 		

@@ -5,4 +5,5 @@ obj-$(CONFIG_WR_NODE) += \
 	shell/cmd_read.o \
 	shell/cmd_wbr.o \
 	shell/cmd_wbw.o \
+	shell/cmd_setbase.o \
 	shell/cmd_help.o

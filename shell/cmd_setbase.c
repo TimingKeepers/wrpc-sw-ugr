@@ -11,21 +11,18 @@
 #include <wrc.h>
 #include "shell.h"
 
-extern int base_wbrw;
+int base_wbrw = 0;
 
-static int cmd_wbw(const char *args[])
+static int cmd_setbase(const char *args[])
 {
 int addr;
-int val;
-int * addr_w;
 
-	if (args[0] && args[1]) {
+	if (args[0]) {
 		fromhex(args[0],&addr);
-		fromhex(args[1],&val);
 		
-		addr_w = (int *) base_wbrw + addr;
+		base_wbrw = addr;
 		
-		*addr_w = val;
+		mprintf("BASE_WB=0x%x\n",addr);
 	}
 	else {
 		return -1;
@@ -34,7 +31,8 @@ int * addr_w;
 	return 0;
 }
 
-DEFINE_WRC_COMMAND(wbw) = {
-	.name = "wbw",
-	.exec = cmd_wbw,
+DEFINE_WRC_COMMAND(setbase) = {
+	.name = "setbase",
+	.exec = cmd_setbase,
 };
+
