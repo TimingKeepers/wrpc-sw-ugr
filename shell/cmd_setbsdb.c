@@ -27,6 +27,8 @@ int i;
 uint32_t * v;
 char * name;
 
+	n_devs = 0;
+
 	if (!args[0]) {
 		if(sdb_get_devices(devs,&n_devs,MAX_SDB_DEVS) == 0) {
 			
@@ -47,8 +49,6 @@ char * name;
 	}
 	else {
 		fromdec(args[0],&index);
-		
-		n_devs = 0;
 		
 		if(sdb_get_devices(devs,&n_devs,MAX_SDB_DEVS) == 0) {
 			
