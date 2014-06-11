@@ -130,7 +130,7 @@ static int get_devices_deep(unsigned int base, unsigned int sdb, struct sdb_comp
 			devs[*n_devs].product.name[19] = 0;
 			devs[*n_devs].addr_first.low = base + record->device.sdb_component.addr_first.low;
 			devs[*n_devs].addr_last.low = base + record->device.sdb_component.addr_last.low;
-			mprintf("DEV: %s (0x%x-0x%x)\n",devs[*n_devs].product.name,devs[*n_devs].addr_first.low,devs[*n_devs].addr_last.low);
+			//mprintf("DEV: %s (0x%x-0x%x)\n",devs[*n_devs].product.name,devs[*n_devs].addr_first.low,devs[*n_devs].addr_last.low);
 			(*n_devs)++;
 		}
 		else {

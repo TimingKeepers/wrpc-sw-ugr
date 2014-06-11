@@ -12,7 +12,7 @@
 #include "shell.h"
 #include "sdb.h"
 
-#define MAX_SDB_DEVS 20
+#define MAX_SDB_DEVS 30
 
 extern int base_wbrw;
 extern int sdb_get_devices(struct sdb_component * devs, unsigned int * n_devs, const int MAX_DEVS);
@@ -27,11 +27,7 @@ int i;
 uint32_t * v;
 char * name;
 
-	if (args[0]) {
-		fromdec(args[0],&index);
-		
-		n_devs = 0;
-		
+	if (!args[0]) {
 		if(sdb_get_devices(devs,&n_devs,MAX_SDB_DEVS) == 0) {
 			
 			mprintf("N devs: %d\n",n_devs);
@@ -42,6 +38,19 @@ char * name;
 				v++;
 				mprintf("dev: %s - 0x%x\n",name,*v);
 			}
+		
+			mprintf("BASE_WB=0x%x\n",base_wbrw);
+		}
+		else {
+			return -2;
+		}
+	}
+	else {
+		fromdec(args[0],&index);
+		
+		n_devs = 0;
+		
+		if(sdb_get_devices(devs,&n_devs,MAX_SDB_DEVS) == 0) {
 			
 			v = (uint32_t *) &(devs[index].addr_first);
 			
@@ -54,9 +63,6 @@ char * name;
 		else {
 			return -2;
 		}
-	}
-	else {
-		return -1;
 	}
 
 	return 0;

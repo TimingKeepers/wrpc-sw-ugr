@@ -17,15 +17,13 @@ static int cmd_setbase(const char *args[])
 {
 int addr;
 
-	if (args[0]) {
-		fromhex(args[0],&addr);
-		
-		base_wbrw = addr;
-		
-		mprintf("BASE_WB=0x%x\n",addr);
+	if (!args[0]) {
+		mprintf("BASE_WB=0x%x\n",base_wbrw);
 	}
 	else {
-		return -1;
+		fromhex(args[0],&addr);
+		base_wbrw = addr;
+		mprintf("BASE_WB=0x%x\n",base_wbrw);
 	}
 
 	return 0;
